@@ -45,7 +45,9 @@ go run github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@v2.3.0 \
   -config oapi-codegen.yaml spec/cloud-hypervisor.yaml
 ```
 
-## Usage (example)
+## Usage
+
+### HTTP endpoint
 
 ```go
 package main
@@ -57,16 +59,41 @@ import (
 )
 
 func main() {
-    // CH API typically listens on a local unix socket with a HTTP bridge, but
-    // here we assume it’s reachable over HTTP at http://localhost/api/v1
-    cfg := ch.WithServer("http://localhost/api/v1")
-
-    // Create a client with default http.Client
-    c, err := ch.NewClient(cfg)
+    // CH API reachable over HTTP
+    client, err := ch.NewClient(ch.WithServer("http://localhost/api/v1"))
     if err != nil { log.Fatal(err) }
 
     // Ping the VMM
-    resp, err := c.VmmPing(context.Background())
+    resp, err := client.VmmPing(context.Background())
+    if err != nil { log.Fatal(err) }
+    log.Printf("CH version: %s", *resp.Version)
+}
+```
+
+### Unix socket (typical local setup)
+
+```go
+package main
+
+import (
+    "context"
+    "log"
+    ch "github.com/VerteraIO/cloud-hypervisor-go/chclient"
+    "github.com/VerteraIO/cloud-hypervisor-go/unixhttp"
+)
+
+func main() {
+    // Create HTTP client for Unix socket communication
+    httpc := unixhttp.NewClient("/run/cloud-hypervisor.sock")
+    
+    client, err := ch.NewClient(
+        ch.WithServer("http://unix/api/v1"),
+        ch.WithHTTPClient(httpc),
+    )
+    if err != nil { log.Fatal(err) }
+
+    // Ping the VMM
+    resp, err := client.VmmPing(context.Background())
     if err != nil { log.Fatal(err) }
     log.Printf("CH version: %s", *resp.Version)
 }
