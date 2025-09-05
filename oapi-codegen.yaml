@@ -1,0 +1,11 @@
+package: chclient
+output: chclient/gen_client.go
+generate:
+  models: true
+  client: true
+compatibility:
+  # Keep pointers on optional fields; align with upstream spec types
+  always-prefix-enum-values: false
+  # Default zero-values instead of pointers for non-nullable primitives
+  # keep-json-names: true
+  # getters: true
